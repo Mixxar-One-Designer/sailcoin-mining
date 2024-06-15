@@ -98,7 +98,7 @@ const Home: React.FC = () => {
 
       {/* Balance display */}
       <div className={styles.balanceContainer}>
-        <Image src="/gold-coin.png" alt="Sailcoin" className={styles.balanceIcon} width={50} height={50} />
+        <Image src="/gold-coin.PNG" alt="Sailcoin" className={styles.balanceIcon} width={50} height={50} />
         <div>
           <div className={styles.balanceText}>Your Balance</div>
           <div className={styles.balanceAmount}>{formatBalance(balance)} SLC</div>
