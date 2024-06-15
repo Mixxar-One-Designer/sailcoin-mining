@@ -72,7 +72,9 @@
 }
 
 .balanceIcon {
-  margin-right: 10px;
+  margin-right: 5px;
+  width: 60px; /* Adjust the width as needed */
+  height: 60px; /* Adjust the height as needed */
 }
 
 .balanceText {
