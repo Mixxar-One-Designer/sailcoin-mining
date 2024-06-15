@@ -1,0 +1,224 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100vh;
+  background: linear-gradient(to bottom, #4ba2c7, #006992); /* Gradient from light blue to dark blue */
+  overflow: hidden;
+  position: relative;
+  padding: 20px; /* Added padding for space from edges */
+}
+
+.backgroundAnimation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -100px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: float 8s infinite ease-in-out;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-100vh);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  animation: sparkle 2s infinite ease-in-out;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.balanceContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px; /* Reduced margin for balance container */
+  z-index: 1;
+  position: relative; /* Ensure z-index works properly */
+}
+
+.balanceIcon {
+  margin-right: 10px;
+}
+
+.balanceText {
+  font-size: 14px; /* Adjusted font size for balance text */
+  color: white;
+  margin-bottom: 5px; /* Added margin bottom for balance text */
+  position: relative;
+}
+
+.balanceText::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(to right, #f39c12, #f1c40f); /* Gold gradient overlay */
+}
+
+.balanceAmount {
+  font-size: 28px; /* Adjusted font size for balance amount */
+  font-weight: bold;
+  color: white;
+  margin-top: 5px; /* Added margin top for balance amount */
+}
+
+.coinButton {
+  position: relative;
+  margin-top: 20px; /* Adjusted margin for coin button */
+  z-index: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.coinButton:hover {
+  transform: scale(1.1); /* Increase scale on hover */
+}
+
+.coinButton::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 191, 255, 0) 0%, rgba(0, 191, 255, 0.4) 60%, rgba(0, 191, 255, 0) 100%);
+  top: 0;
+  left: 0;
+  z-index: -1;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.coinButton:hover::after {
+  opacity: 1;
+}
+
+.miningButton {
+  cursor: pointer;
+  width: 250px; /* Adjusted width for the mining button */
+  height: 250px; /* Adjusted height for the mining button */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative; /* Ensure z-index works properly */
+}
+
+.miningButton img {
+  width: 130%; /* Increased image size */
+  height: auto;
+  max-width: none;
+}
+
+.rewardText {
+  position: absolute;
+  top: -40px; /* Adjusted position to appear above the balance */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  font-weight: bold;
+  color: gold;
+  animation: rewardAnimation 1s ease-in-out;
+}
+
+@keyframes rewardAnimation {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -20px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -80px);
+  }
+}
+
+/* Adjusted animation for the +1 number */
+@keyframes flyUp {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -100px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -200px);
+  }
+}
+
+.flyingNumber {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 24px;
+  color: gold; /* Changed to gold color */
+  font-weight: bold;
+  animation: flyUp 2s forwards ease-in-out;
+}
+
+.navButtons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px; /* Adjusted margin for navigation buttons */
+  z-index: 1;
+}
+
+.navButton {
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: rgba(0, 191, 255, 0.2); /* Transparent ocean blue hover */
+}
+
+/* Example of CSS for the limitReached class */
+.limitReached {
+  color: red; /* Change text color to red */
+  font-size: 12px; /* Adjust font size */
+  margin-left: 10px; /* Add margin for spacing */
+}

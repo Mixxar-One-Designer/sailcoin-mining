@@ -1,113 +1,132 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import styles from '../styles/Home.module.css'; // Ensure you have the correct path to your CSS file
+import { db } from '../lib/firebase'; // Adjust the import path as necessary
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+
+const Home = () => {
+  const [balance, setBalance] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const [rewardedAmount, setRewardedAmount] = useState(0);
+  const [flyingNumbers, setFlyingNumbers] = useState<{ id: number, amount: number }[]>([]);
+  const [flyingNumberId, setFlyingNumberId] = useState(0);
+
+  useEffect(() => {
+    // Placeholder for user ID setup
+    const mockUserId = 'testUser123'; // Replace with actual user ID logic from Telegram
+    setUserId(mockUserId);
+  }, []);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (userId) {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          setBalance(userDoc.data().balance || 0);
+        } else {
+          // Initialize the user document if it does not exist
+          await setDoc(userRef, { balance: 0 });
+          setBalance(0);
+        }
+      }
+    };
+    fetchBalance();
+  }, [userId]);
+
+  const handleMineClick = async () => {
+    if (userId) {
+      const userRef = doc(db, 'users', userId);
+      const newBalance = balance + 1;
+      setBalance(newBalance);
+      setRewardedAmount(1); // Set the amount to be rewarded (can be adjusted as needed)
+      const newFlyingNumberId = flyingNumberId + 1;
+      setFlyingNumberId(newFlyingNumberId);
+      setFlyingNumbers([...flyingNumbers, { id: newFlyingNumberId, amount: 1 }]);
+      await updateDoc(userRef, { balance: newBalance });
+      // Reset animation state after a delay to allow animation to play
+      setTimeout(() => {
+        setFlyingNumbers(flyingNumbers.filter(f => f.id !== newFlyingNumberId));
+      }, 2000); // Adjust the delay as needed to match the animation duration
+    }
+  };
+
+  const formatBalance = (balance: number) => {
+    if (balance < 1000000) {
+      return balance.toLocaleString(); // Display as 100,000 format
+    } else if (balance < 10000000) {
+      return (balance / 1000000).toFixed(1) + 'M'; // Display as 1.0M format
+    } else {
+      return (balance / 1000000).toFixed(0) + 'M'; // Display as 10M format
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className={styles.container}>
+      {/* Background animation */}
+      <div className={styles.backgroundAnimation}>
+        {[...Array(20)].map((_, index) => (
+          <div
+            key={index}
+            className={styles.bubble}
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 6}s`,
+            }}
+          />
+        ))}
+        {[...Array(10)].map((_, index) => (
+          <div
+            key={`sparkle-${index}`}
+            className={styles.sparkle}
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Balance display */}
+      <div className={styles.balanceContainer}>
+        <Image src="/gold-coin.png" alt="Sailcoin" className={styles.balanceIcon} width={50} height={50} />
+        <div>
+          <div className={styles.balanceText}>Your Balance</div>
+          <div className={styles.balanceAmount}>{formatBalance(balance)} SLC</div>
         </div>
       </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      {/* Mining button */}
+      <div className={styles.coinButton} onClick={handleMineClick}>
+        <div className={styles.miningButton}>
+          <Image src="/slc.PNG" alt="Mine" width={150} height={150} />
+          {showRewardAnimation && (
+            <div className={styles.rewardText}>
+              +{rewardedAmount}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+      {/* Flying numbers */}
+      {flyingNumbers.map(flyingNumber => (
+        <div key={flyingNumber.id} className={styles.flyingNumber}>
+          +{flyingNumber.amount}
+        </div>
+      ))}
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      {/* Navigation buttons */}
+      <div className={styles.navButtons}>
+        <button className={styles.navButton}>Tasks</button>
+        <button className={styles.navButton}>Leaderboard</button>
+        <button className={styles.navButton}>Daily Limit</button>
       </div>
-    </main>
+    </div>
   );
-}
+};
+
+export default Home;
