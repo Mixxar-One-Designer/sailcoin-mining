@@ -6,13 +6,18 @@ import styles from '../styles/Home.module.css'; // Ensure you have the correct p
 import { db } from '../lib/firebase'; // Adjust the import path as necessary
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
-const Home = () => {
-  const [balance, setBalance] = useState(0);
+interface FlyingNumber {
+  id: number;
+  amount: number;
+}
+
+const Home: React.FC = () => {
+  const [balance, setBalance] = useState<number>(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
-  const [rewardedAmount, setRewardedAmount] = useState(0);
-  const [flyingNumbers, setFlyingNumbers] = useState<{ id: number, amount: number }[]>([]);
-  const [flyingNumberId, setFlyingNumberId] = useState(0);
+  const [showRewardAnimation, setShowRewardAnimation] = useState<boolean>(false);
+  const [rewardedAmount, setRewardedAmount] = useState<number>(0);
+  const [flyingNumbers, setFlyingNumbers] = useState<FlyingNumber[]>([]);
+  const [flyingNumberId, setFlyingNumberId] = useState<number>(0);
 
   useEffect(() => {
     // Placeholder for user ID setup
