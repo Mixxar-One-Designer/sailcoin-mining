@@ -204,6 +204,26 @@
   z-index: 1;
 }
 
+.comingSoonPopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 20px 40px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 18px;
+  z-index: 1000;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 .navButton {
   padding: 10px 20px;
   font-size: 16px;
@@ -223,4 +243,33 @@
   color: red; /* Change text color to red */
   font-size: 12px; /* Adjust font size */
   margin-left: 10px; /* Add margin for spacing */
+}
+
+/* Add these styles to your Home.module.css */
+
+.progressContainer {
+  width: 25%;
+  height: 40px;
+  background-color: #f3f3f3;
+  border-radius: 25px;
+  margin: 20px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.progressCylinder {
+  height: 100%;
+  border-radius: 25px;
+  transition: width 0.3s;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.progressText {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 50px;
+  font-weight: bold;
 }
