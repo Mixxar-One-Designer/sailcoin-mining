@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // Correct import
 import styles from '../styles/Home.module.css';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -26,6 +27,7 @@ const Home: React.FC = () => {
 
   const incrementInterval = useRef<NodeJS.Timeout | null>(null);
   const isClicking = useRef<boolean>(false);
+  const router = useRouter();
 
   useEffect(() => {
     const mockUserId = 'testUser123'; // Replace with actual user ID logic from Telegram
@@ -35,14 +37,18 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchBalance = async () => {
       if (userId) {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const userBalance = userDoc.data()?.balance || 0; // Use optional chaining
-          setBalance(userBalance);
-        } else {
-          await setDoc(userRef, { balance: 0 });
-          setBalance(0);
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userBalance = userDoc.data()?.balance || 0;
+            setBalance(userBalance);
+          } else {
+            await setDoc(userRef, { balance: 0 });
+            setBalance(0);
+          }
+        } catch (error) {
+          console.error("Error fetching balance:", error);
         }
       }
     };
@@ -63,7 +69,7 @@ const Home: React.FC = () => {
     if (!isClicking.current && clicksRemaining < 1000) {
       incrementInterval.current = setInterval(() => {
         setClicksRemaining((prev) => Math.min(prev + 1, 1000));
-      }, 300); // Slower refill speed
+      }, 300);
     } else if (isClicking.current && incrementInterval.current) {
       clearInterval(incrementInterval.current);
       incrementInterval.current = null;
@@ -79,28 +85,39 @@ const Home: React.FC = () => {
   const handleMineClick = async () => {
     if (userId && !dailyLimitReached && clicksRemaining > 0) {
       isClicking.current = true;
-      const userRef = doc(db, 'users', userId);
-      const newBalance = balance + 1;
-      setBalance(newBalance);
-      setRewardedAmount(1);
-      const newFlyingNumberId = flyingNumberId + 1;
-      setFlyingNumberId(newFlyingNumberId);
-      setFlyingNumbers([...flyingNumbers, { id: newFlyingNumberId, amount: 1 }]);
-      await updateDoc(userRef, { balance: newBalance });
+      try {
+        const userRef = doc(db, 'users', userId);
+        const newBalance = balance + 1;
+        setBalance(newBalance);
+        setRewardedAmount(1);
+        const newFlyingNumberId = flyingNumberId + 1;
+        setFlyingNumberId(newFlyingNumberId);
+        setFlyingNumbers((prev) => [...prev, { id: newFlyingNumberId, amount: 1 }]);
+        await updateDoc(userRef, { balance: newBalance });
+        setClicksRemaining((prev) => Math.max(prev - 1, 0));
 
-      setClicksRemaining((prev) => Math.max(prev - 1, 0));
+        // Call the API to update balance
+        const success = await updateBalance(userId, newBalance);
+        if (success) {
+          console.log('Balance updated successfully via API');
+        } else {
+          console.error('Failed to update balance via API');
+        }
 
-      if (newBalance >= 10000) {
-        setDailyLimitReached(true);
-        const nextTime = new Date();
-        nextTime.setDate(nextTime.getDate() + 1);
-        nextTime.setHours(0, 0, 0, 0);
-        setNextMiningTime(nextTime);
+        if (newBalance >= 10000) {
+          setDailyLimitReached(true);
+          const nextTime = new Date();
+          nextTime.setDate(nextTime.getDate() + 1);
+          nextTime.setHours(0, 0, 0, 0);
+          setNextMiningTime(nextTime);
+        }
+
+        setTimeout(() => {
+          setFlyingNumbers((prev) => prev.filter(f => f.id !== newFlyingNumberId));
+        }, 2000);
+      } catch (error) {
+        console.error("Error updating balance:", error);
       }
-
-      setTimeout(() => {
-        setFlyingNumbers(flyingNumbers.filter(f => f.id !== newFlyingNumberId));
-      }, 2000);
     }
   };
 
@@ -109,7 +126,7 @@ const Home: React.FC = () => {
     if (clicksRemaining === 0) {
       incrementInterval.current = setInterval(() => {
         setClicksRemaining((prev) => Math.min(prev + 1, 1000));
-      }, 300); // Ensure the refill starts after reaching 0
+      }, 300);
     }
   };
 
@@ -123,11 +140,42 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleLeaderboardClick = () => {
+    router.push('/leaderboard'); // Ensure correct path here
+  };
+
   const handleComingSoonClick = () => {
     setShowComingSoon(true);
     setTimeout(() => {
       setShowComingSoon(false);
     }, 2000);
+  };
+
+  // Function to update balance via API
+  const updateBalance = async (userId: string, balance: number) => {
+    try {
+      const response = await fetch('/api/update-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          balance: balance,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update balance');
+      }
+
+      const data = await response.json();
+      console.log('Balance updated via API:', data);
+      return true;
+    } catch (error) {
+      console.error('Error updating balance via API:', error);
+      return false;
+    }
   };
 
   return (
@@ -208,7 +256,7 @@ const Home: React.FC = () => {
         <div className={styles.navButton} onClick={handleComingSoonClick}>
           Tasks
         </div>
-        <div className={styles.navButton} onClick={handleComingSoonClick}>
+        <div className={styles.navButton} onClick={handleLeaderboardClick}>
           Leaderboard
         </div>
         <div className={styles.navButton} onClick={handleComingSoonClick}>
