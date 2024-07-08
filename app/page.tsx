@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation'; // Correct import
+import { useRouter } from 'next/navigation';
 import styles from '../styles/Home.module.css';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTasks, faTrophy, faRocket, faWallet, faSackDollar, faUser, faBolt } from '@fortawesome/free-solid-svg-icons';
 
 interface FlyingNumber {
   id: number;
@@ -14,6 +16,7 @@ interface FlyingNumber {
 
 const Home: React.FC = () => {
   const [balance, setBalance] = useState<number>(0);
+  const [userName, setUserName] = useState<string>('User');
   const [userId, setUserId] = useState<string | null>(null);
   const [showRewardAnimation, setShowRewardAnimation] = useState<boolean>(false);
   const [rewardedAmount, setRewardedAmount] = useState<number>(0);
@@ -28,10 +31,13 @@ const Home: React.FC = () => {
   const incrementInterval = useRef<NodeJS.Timeout | null>(null);
   const isClicking = useRef<boolean>(false);
   const router = useRouter();
+  const miningAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const mockUserId = 'testUser123'; // Replace with actual user ID logic from Telegram
-    setUserId(mockUserId);
+    const queryParams = new URLSearchParams(window.location.search);
+    const actualUserId = queryParams.get('userId') || 'testUser123';
+    setUserId(actualUserId);
+    // Fetch the user's name here and set it to userName
   }, []);
 
   useEffect(() => {
@@ -96,7 +102,6 @@ const Home: React.FC = () => {
         await updateDoc(userRef, { balance: newBalance });
         setClicksRemaining((prev) => Math.max(prev - 1, 0));
 
-        // Call the API to update balance
         const success = await updateBalance(userId, newBalance);
         if (success) {
           console.log('Balance updated successfully via API');
@@ -130,6 +135,19 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleRechargeTool = () => {
+    let rechargeInterval: NodeJS.Timeout;
+    rechargeInterval = setInterval(() => {
+      setClicksRemaining((prev) => {
+        if (prev >= 1000) {
+          clearInterval(rechargeInterval);
+          return 1000;
+        }
+        return prev + 50;
+      });
+    }, 100);
+  };
+
   const formatBalance = (balance: number) => {
     if (balance < 1000000) {
       return balance.toLocaleString();
@@ -141,7 +159,7 @@ const Home: React.FC = () => {
   };
 
   const handleLeaderboardClick = () => {
-    router.push('/leaderboard'); // Ensure correct path here
+    router.push('/leaderboard');
   };
 
   const handleComingSoonClick = () => {
@@ -151,7 +169,6 @@ const Home: React.FC = () => {
     }, 2000);
   };
 
-  // Function to update balance via API
   const updateBalance = async (userId: string, balance: number) => {
     try {
       const response = await fetch('/api/update-balance', {
@@ -180,95 +197,76 @@ const Home: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.backgroundAnimation}>
-        {[...Array(20)].map((_, index) => (
-          <div
-            key={index}
-            className={styles.bubble}
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 6}s`,
-            }}
-          />
-        ))}
-        {[...Array(10)].map((_, index) => (
-          <div
-            key={`sparkle-${index}`}
-            className={styles.sparkle}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className={styles.balanceContainer}>
-        <Image src="/gold-coin.PNG" alt="Sailcoin" className={styles.balanceIcon} width={50} height={50} />
-        <div>
-          <div className={styles.balanceText}>Your Balance</div>
-          <div className={styles.balanceAmount}>{formatBalance(balance)} SLC</div>
+      <div className={styles.statusBar}>
+        <div className={styles.statusItem}>
+          <FontAwesomeIcon icon={faUser} size="2x" />
+          <div>{userName}</div>
+        </div>
+        <div className={styles.statusItem}>
+          <FontAwesomeIcon icon={faSackDollar} size="2x" />
+          <div>SLC: {balance}</div>
+        </div>
+        <div className={styles.statusItem}>
+          <FontAwesomeIcon icon={faBolt} size="2x" />
+          <div>{clicksRemaining}</div>
         </div>
       </div>
-
-      <div
-        className={styles.coinButton}
-        onMouseDown={handleMineClick}
-        onMouseUp={handleMineRelease}
-        onTouchStart={handleMineClick}
-        onTouchEnd={handleMineRelease}
-      >
-        <div className={styles.miningButton}>
-          <Image src="/slc.PNG" alt="Mine" width={150} height={150} />
-          {showRewardAnimation && (
-            <div className={styles.rewardText}>
-              +{rewardedAmount}
-            </div>
-          )}
-        </div>
+      <div className={styles.mineArea} ref={miningAreaRef} onMouseDown={handleMineClick} onMouseUp={handleMineRelease} style={{ position: 'relative' }}>
+        <Image src="/slcoin.png" alt="SLCoin" width={200} height={200} className={styles.pickaxe} id="pickaxe" />
+        {flyingNumbers.map((number) => (
+          <div key={number.id} className={styles.slcFlying}>
+            +{number.amount}
+          </div>
+        ))}
       </div>
-
-      {dailyLimitReached && (
-        <div className={styles.dailyLimitPopup}>
-          <div className={styles.popupText}>Sorry, you have reached your daily limit.</div>
-          {nextMiningTime && (
-            <div className={styles.popupText}>
-              Come back tomorrow at {nextMiningTime.toLocaleString([], { hour: 'numeric', minute: '2-digit' })}
-            </div>
-          )}
+      <div className={styles.buttonContainer}>
+        <button className={styles.actionButton} onClick={handleComingSoonClick}>
+          <FontAwesomeIcon icon={faWallet} size="2x" />
+          <div>Wallet</div>
+        </button>
+        <button className={styles.actionButton} onClick={handleComingSoonClick}>
+          <FontAwesomeIcon icon={faTasks} size="2x" />
+          <div>Tasks</div>
+        </button>
+        <button onClick={handleRechargeTool} className={styles.actionButton}>
+          <FontAwesomeIcon icon={faBolt} size="2x" />
+          <div>Recharge</div>
+        </button>
+        <button className={styles.actionButton} onClick={handleLeaderboardClick}>
+          <FontAwesomeIcon icon={faTrophy} size="2x" />
+          <div>Leaderboard</div>
+        </button>
+        <button className={styles.actionButton} onClick={handleComingSoonClick}>
+          <FontAwesomeIcon icon={faRocket} size="2x" />
+          <div>Boost</div>
+        </button>
+      </div>
+      {showRewardAnimation && (
+        <div className={styles.rewardAnimation}>
+          <span>+{rewardedAmount}</span>
         </div>
       )}
-
-      <div className={styles.progressContainer}>
-        <div className={styles.progressCylinder} style={{ width: `${(clicksRemaining / 1000) * 100}%`, background: `linear-gradient(90deg, red, orange, green)` }}>
-          <div className={styles.progressText}>{clicksRemaining}</div>
-        </div>
-      </div>
-
-      {flyingNumbers.map(flyingNumber => (
-        <div key={flyingNumber.id} className={styles.flyingNumber}>
-          +{flyingNumber.amount}
-        </div>
-      ))}
-
-      <div className={styles.navButtons}>
-        <div className={styles.navButton} onClick={handleComingSoonClick}>
-          Tasks
-        </div>
-        <div className={styles.navButton} onClick={handleLeaderboardClick}>
-          Leaderboard
-        </div>
-        <div className={styles.navButton} onClick={handleComingSoonClick}>
-          Daily Limit
-        </div>
-      </div>
-
       {showComingSoon && (
-        <div className={styles.comingSoonPopup}>
-          <div className={styles.popupText}>Coming Soon</div>
+        <div className={styles.comingSoon}>
+          Coming Soon!
         </div>
       )}
+      <style jsx>{`
+        .${styles.slcFlying} {
+          position: absolute;
+          animation: fly 2s ease-in-out forwards;
+        }
+        @keyframes fly {
+          0% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-100px);
+          }
+        }
+      `}</style>
     </div>
   );
 };

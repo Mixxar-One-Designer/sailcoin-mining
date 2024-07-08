@@ -1,4 +1,5 @@
-// next.config.js
 module.exports = {
-  reactStrictMode: true,
+  images: {
+    domains: ['example.com'], // Add the domains where your images are hosted
+  },
 };

@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../lib/firebase';
 import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
@@ -6,8 +6,8 @@ const updateBalance = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
     const { user_id, balance } = req.body;
 
-    if (!user_id || balance === undefined) {
-      return res.status(400).json({ error: 'Missing user_id or balance' });
+    if (!user_id || typeof balance !== 'number') {
+      return res.status(400).json({ error: 'Invalid user_id or balance' });
     }
 
     try {
@@ -20,9 +20,11 @@ const updateBalance = async (req: NextApiRequest, res: NextApiResponse) => {
         await setDoc(userRef, { balance });
       }
 
-      return res.status(200).json({ success: true, balance });
-    } catch (error) {
-      console.error('Error updating balance:', error);
+      const updatedUserDoc = await getDoc(userRef);
+      return res.status(200).json({ success: true, data: updatedUserDoc.data() });
+      
+    } catch (error: any) {
+      console.error('Error updating balance:', error.message);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   } else {
@@ -30,6 +32,4 @@ const updateBalance = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-// Assign the function to a variable before exporting
-const handler = updateBalance;
-export default handler;
+export default updateBalance;
