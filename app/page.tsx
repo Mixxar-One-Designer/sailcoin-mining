@@ -229,7 +229,7 @@ const Home: React.FC = () => {
         </div>
       </div>
       <div className={styles.mineArea} ref={miningAreaRef} onMouseDown={handleMineClick} onMouseUp={handleMineRelease} style={{ position: 'relative' }}>
-        <Image src="/slcoin.png" alt="SLCoin" width={200} height={200} className={styles.pickaxe} id="pickaxe" />
+        <Image src="/slcoin.PNG" alt="SLCoin" width={200} height={200} className={styles.pickaxe} id="pickaxe" />
         {flyingNumbers.map((number) => (
           <div key={number.id} className={styles.slcFlying}>
             +{number.amount}
