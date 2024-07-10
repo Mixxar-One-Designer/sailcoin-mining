@@ -195,6 +195,23 @@ const Home: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const createBubble = () => {
+      const bubble = document.createElement('div');
+      bubble.className = styles.bubble;
+      bubble.style.left = `${Math.random() * 100}%`;
+      document.body.appendChild(bubble);
+
+      setTimeout(() => {
+        bubble.remove();
+      }, 10000);
+    };
+
+    const bubbleInterval = setInterval(createBubble, 300);
+
+    return () => clearInterval(bubbleInterval);
+  }, []);
+
   return (
     <div className={styles.container}>
       <div className={styles.statusBar}>
