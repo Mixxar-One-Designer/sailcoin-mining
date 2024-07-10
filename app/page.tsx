@@ -8,6 +8,7 @@ import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTasks, faTrophy, faRocket, faWallet, faSackDollar, faUser, faBolt } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios'; // Import axios for HTTP requests
 
 interface FlyingNumber {
   id: number;
@@ -27,6 +28,7 @@ const Home: React.FC = () => {
   const [clicksRemaining, setClicksRemaining] = useState<number>(1000);
   const [cylinderColor, setCylinderColor] = useState<string>('green');
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null); // State for storing user's avatar URL
 
   const incrementInterval = useRef<NodeJS.Timeout | null>(null);
   const isClicking = useRef<boolean>(false);
@@ -37,7 +39,31 @@ const Home: React.FC = () => {
     const queryParams = new URLSearchParams(window.location.search);
     const actualUserId = queryParams.get('userId') || 'testUser123';
     setUserId(actualUserId);
-    // Fetch the user's name here and set it to userName
+    
+    // Fetch the user's name and profile picture
+    const fetchUserData = async () => {
+      try {
+        // Fetch user info from Telegram API
+        const response = await axios.get(`https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUserProfilePhotos`, {
+          params: {
+            user_id: actualUserId,
+            limit: 1 // Fetch only the latest profile picture
+          }
+        });
+        
+        // Update user name
+        setUserName(response.data.result.user.first_name.substring(0, 3) + '...');
+
+        // Update user avatar
+        if (response.data.result.total_count > 0) {
+          setUserAvatar(response.data.result.photos[0][0].file_id);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   useEffect(() => {
@@ -216,7 +242,7 @@ const Home: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.statusBar}>
         <div className={styles.statusItem}>
-          <FontAwesomeIcon icon={faUser} size="2x" />
+          <Image src={userAvatar ? `https://api.telegram.org/file/bot<YOUR_BOT_TOKEN>/${userAvatar}` : '/avatar-placeholder.jpg'} alt="Avatar" width={40} height={40} className={styles.avatar} />
           <div>{userName}</div>
         </div>
         <div className={styles.statusItem}>

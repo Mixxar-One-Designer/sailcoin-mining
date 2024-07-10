@@ -14,6 +14,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@react-three/drei": "^9.106.0",
     "@react-three/fiber": "^8.16.8",
+    "axios": "^1.7.2",
     "body-parser": "^1.20.2",
     "drei": "^2.2.21",
     "express": "^4.19.2",
