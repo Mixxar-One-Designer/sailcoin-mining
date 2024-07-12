@@ -171,3 +171,13 @@
     transform: translateY(-1000px) scale(1.5);
   }
 }
+
+.circularImage {
+  border-radius: 50%;
+}
+
+.profilePicture {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
