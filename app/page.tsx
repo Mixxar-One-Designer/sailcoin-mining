@@ -8,7 +8,7 @@ import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTasks, faTrophy, faRocket, faWallet, faSackDollar, faUser, faBolt } from '@fortawesome/free-solid-svg-icons';
-import axios from 'axios'; // Import axios for HTTP requests
+import axios from 'axios';
 
 interface FlyingNumber {
   id: number;
@@ -28,7 +28,7 @@ const Home: React.FC = () => {
   const [clicksRemaining, setClicksRemaining] = useState<number>(1000);
   const [cylinderColor, setCylinderColor] = useState<string>('green');
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null); // State for storing user's avatar URL
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   const incrementInterval = useRef<NodeJS.Timeout | null>(null);
   const isClicking = useRef<boolean>(false);
@@ -39,22 +39,18 @@ const Home: React.FC = () => {
     const queryParams = new URLSearchParams(window.location.search);
     const actualUserId = queryParams.get('userId') || 'testUser123';
     setUserId(actualUserId);
-    
-    // Fetch the user's name and profile picture
+
     const fetchUserData = async () => {
       try {
-        // Fetch user info from Telegram API
-        const response = await axios.get(`https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUserProfilePhotos`, {
+        const response = await axios.get(`https://api.telegram.org/bot<6897920395:AAEl4SH-ZdkLdYwC8Ex9t7sp5jNhT2Ei2ws>/getUserProfilePhotos`, {
           params: {
             user_id: actualUserId,
-            limit: 1 // Fetch only the latest profile picture
+            limit: 1
           }
         });
         
-        // Update user name
         setUserName(response.data.result.user.first_name.substring(0, 3) + '...');
-
-        // Update user avatar
+        
         if (response.data.result.total_count > 0) {
           setUserAvatar(response.data.result.photos[0][0].file_id);
         }
@@ -125,8 +121,9 @@ const Home: React.FC = () => {
         const newFlyingNumberId = flyingNumberId + 1;
         setFlyingNumberId(newFlyingNumberId);
         setFlyingNumbers((prev) => [...prev, { id: newFlyingNumberId, amount: 1 }]);
-        await updateDoc(userRef, { balance: newBalance });
         setClicksRemaining((prev) => Math.max(prev - 1, 0));
+        
+        await updateDoc(userRef, { balance: newBalance });
 
         const success = await updateBalance(userId, newBalance);
         if (success) {
@@ -242,12 +239,12 @@ const Home: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.statusBar}>
         <div className={styles.statusItem}>
-          <Image src={userAvatar ? `https://api.telegram.org/file/bot<YOUR_BOT_TOKEN>/${userAvatar}` : '/avatar-placeholder.jpg'} alt="Avatar" width={40} height={40} className={styles.avatar} />
+          <Image src={userAvatar ? `https://api.telegram.org/file/bot<6897920395:AAEl4SH-ZdkLdYwC8Ex9t7sp5jNhT2Ei2ws>/${userAvatar}` : '/avatar.png'} alt="Avatar" width={40} height={40} className={styles.avatar} />
           <div>{userName}</div>
         </div>
         <div className={styles.statusItem}>
           <FontAwesomeIcon icon={faSackDollar} size="2x" />
-          <div>SLC: {balance}</div>
+            <span>{formatBalance(balance)} SLC</span>
         </div>
         <div className={styles.statusItem}>
           <FontAwesomeIcon icon={faBolt} size="2x" />
