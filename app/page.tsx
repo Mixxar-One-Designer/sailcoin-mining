@@ -181,8 +181,16 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleWalletClick = () => {
+    router.push('/wallet');
+  };  
+
   const handleLeaderboardClick = () => {
     router.push('/leaderboard');
+  };
+
+  const handleTasksClick = () => {
+    router.push('/tasks');
   };
 
   const handleComingSoonClick = () => {
@@ -260,11 +268,11 @@ const Home: React.FC = () => {
         ))}
       </div>
       <div className={styles.buttonContainer}>
-        <button className={styles.actionButton} onClick={handleComingSoonClick}>
+      <button className={styles.actionButton} onClick={handleWalletClick}>
           <FontAwesomeIcon icon={faWallet} size="2x" />
           <div>Wallet</div>
         </button>
-        <button className={styles.actionButton} onClick={handleComingSoonClick}>
+        <button className={styles.actionButton} onClick={handleTasksClick}>
           <FontAwesomeIcon icon={faTasks} size="2x" />
           <div>Tasks</div>
         </button>

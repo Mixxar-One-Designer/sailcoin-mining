@@ -1,0 +1,135 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    position: relative;
+    background: linear-gradient(to bottom, #000428, #004e92);
+    color: white;
+    overflow: hidden;
+  }
+    
+  .header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+    
+  .backButton {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+    
+  .title {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+  }
+    
+  .tasksList {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    margin-top: 20px;
+  }
+    
+  .task {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+  }
+  
+  .platformButton,
+  .claimButton {
+    padding: 6px 10px; /* Further reduced padding */
+    font-size: 12px; /* Further reduced font size */
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Further reduced gap */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+    
+  .platformButton {
+    background-color: #007bff;
+    color: white;
+  }
+    
+  .platformButton:hover {
+    background-color: #0056b3;
+  }
+  
+  .platformButton.completed {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+    
+  .claimButton {
+    background-color: #6c757d;
+    color: white;
+    cursor: not-allowed;
+  }
+    
+  .claimButton.active {
+    background-color: #ffc107;
+    color: black;
+    cursor: pointer;
+  }
+    
+  .claimButton.active:hover {
+    background-color: #ffca2c;
+  }
+  
+  .flyingReward {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: bold;
+    color: yellow;
+    animation: fly 2s ease-in-out;
+    z-index: 2;
+  }
+    
+  @keyframes fly {
+    0% {
+      transform: translate(-50%, -50%) translateY(0);
+    }
+    100% {
+      transform: translate(-50%, -50%) translateY(-100px);
+    }
+  }
+    
+  .bubble {
+    position: absolute;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: bubbleAnimation 10s linear infinite;
+    z-index: 1;
+  }
+    
+  @keyframes bubbleAnimation {
+    0% {
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      transform: translateY(-1000px) scale(1.5);
+    }
+  }  
