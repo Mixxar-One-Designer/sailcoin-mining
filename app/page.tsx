@@ -39,28 +39,27 @@ const Home: React.FC = () => {
     const queryParams = new URLSearchParams(window.location.search);
     const actualUserId = queryParams.get('userId') || 'testUser123';
     setUserId(actualUserId);
-
+  
     const fetchUserData = async () => {
-      try {
-        const response = await axios.get(`https://api.telegram.org/bot<6897920395:AAEl4SH-ZdkLdYwC8Ex9t7sp5jNhT2Ei2ws>/getUserProfilePhotos`, {
-          params: {
-            user_id: actualUserId,
-            limit: 1
+      if (actualUserId) {
+        const userRef = doc(db, 'users', actualUserId);
+        const userDoc = await getDoc(userRef);
+  
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserName(userData?.name || 'User');
+        } else {
+          // If user data doesn't exist, fetch from Telegram and store it
+          const userData = await fetchAndStoreUserData(actualUserId);
+          if (userData) {
+            setUserName(userData.userName);
           }
-        });
-        
-        setUserName(response.data.result.user.first_name.substring(0, 3) + '...');
-        
-        if (response.data.result.total_count > 0) {
-          setUserAvatar(response.data.result.photos[0][0].file_id);
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
       }
     };
-
+  
     fetchUserData();
-  }, []);
+  }, []);  
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -81,7 +80,7 @@ const Home: React.FC = () => {
       }
     };
     fetchBalance();
-  }, [userId]);
+  }, [userId]);  
 
   useEffect(() => {
     if (clicksRemaining < 500) {
@@ -124,14 +123,14 @@ const Home: React.FC = () => {
         setClicksRemaining((prev) => Math.max(prev - 1, 0));
         
         await updateDoc(userRef, { balance: newBalance });
-
+  
         const success = await updateBalance(userId, newBalance);
         if (success) {
           console.log('Balance updated successfully via API');
         } else {
           console.error('Failed to update balance via API');
         }
-
+  
         if (newBalance >= 10000) {
           setDailyLimitReached(true);
           const nextTime = new Date();
@@ -139,7 +138,7 @@ const Home: React.FC = () => {
           nextTime.setHours(0, 0, 0, 0);
           setNextMiningTime(nextTime);
         }
-
+  
         setTimeout(() => {
           setFlyingNumbers((prev) => prev.filter(f => f.id !== newFlyingNumberId));
         }, 2000);
@@ -147,8 +146,8 @@ const Home: React.FC = () => {
         console.error("Error updating balance:", error);
       }
     }
-  };
-
+  };  
+  
   const handleMineRelease = () => {
     isClicking.current = false;
     if (clicksRemaining === 0) {
@@ -170,6 +169,30 @@ const Home: React.FC = () => {
       });
     }, 100);
   };
+
+  const fetchAndStoreUserData = async (userId: string) => {
+    try {
+      // Fetch user data from Telegram bot API
+      const response = await axios.get(`https://api.telegram.org/bot<6897920395:AAEl4SH-ZdkLdYwC8Ex9t7sp5jNhT2Ei2ws>/getUserProfilePhotos`, {
+        params: {
+          user_id: userId,
+          limit: 1
+        }
+      });
+  
+      const userName = response.data.result.user.first_name;
+      const userAvatar = response.data.result.total_count > 0 ? response.data.result.photos[0][0].file_id : null;
+  
+      // Store user data in Firestore
+      const userRef = doc(db, 'users', userId);
+      await setDoc(userRef, { name: userName, avatar: userAvatar }, { merge: true });
+  
+      return { userName, userAvatar };
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  };  
 
   const formatBalance = (balance: number) => {
     if (balance < 1000000) {
@@ -212,11 +235,11 @@ const Home: React.FC = () => {
           balance: balance,
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to update balance');
       }
-
+  
       const data = await response.json();
       console.log('Balance updated via API:', data);
       return true;
@@ -224,7 +247,7 @@ const Home: React.FC = () => {
       console.error('Error updating balance via API:', error);
       return false;
     }
-  };
+  };  
 
   useEffect(() => {
     const createBubble = () => {
@@ -246,8 +269,8 @@ const Home: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.statusBar}>
-        <div className={styles.statusItem}>
-          <Image src={userAvatar ? `https://api.telegram.org/file/bot<6897920395:AAEl4SH-ZdkLdYwC8Ex9t7sp5jNhT2Ei2ws>/${userAvatar}` : '/avatar.png'} alt="Avatar" width={40} height={40} className={styles.avatar} />
+      <div className={styles.statusItem}>
+          <FontAwesomeIcon icon={faUser} size="2x" />
           <div>{userName}</div>
         </div>
         <div className={styles.statusItem}>
