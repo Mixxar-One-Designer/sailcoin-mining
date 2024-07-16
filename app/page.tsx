@@ -37,35 +37,31 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const actualUserId = queryParams.get('userId');
-    if (actualUserId) {
-      setUserId(actualUserId);
-    } else {
-      // Handle the case where no userId is provided in query parameters
-      // You might want to redirect the user or prompt for authentication
-      console.warn('No userId found in query parameters.');
-    }
-  }, []);  
-
-  useEffect(() => {
+    const actualUserId = queryParams.get('userId') || 'testUser123';
+    setUserId(actualUserId);
+  
     const fetchUserData = async () => {
-      if (userId) {
-        try {
-          const userRef = doc(db, 'users', userId);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setUserName(userData?.name || 'User');
-          } else {
-            // Handle the case where user data doesn't exist
-            console.warn(`No data found for user with ID ${userId}`);
+      if (actualUserId) {
+        const userRef = doc(db, 'users', actualUserId);
+        const userDoc = await getDoc(userRef);
+  
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserName(userData?.name || 'User');
+        } else {
+          // If user data doesn't exist, fetch from Telegram and store it
+          const userData = await fetchAndStoreUserData(actualUserId);
+          if (userData) {
+            setUserName(userData.userName);
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
         }
       }
     };
   
+    fetchUserData();
+  }, []);  
+
+  useEffect(() => {
     const fetchBalance = async () => {
       if (userId) {
         try {
@@ -75,7 +71,6 @@ const Home: React.FC = () => {
             const userBalance = userDoc.data()?.balance || 0;
             setBalance(userBalance);
           } else {
-            // If no balance data exists, initialize it
             await setDoc(userRef, { balance: 0 });
             setBalance(0);
           }
@@ -84,11 +79,9 @@ const Home: React.FC = () => {
         }
       }
     };
-  
-    fetchUserData();
     fetchBalance();
-  }, [userId]);
-  
+  }, [userId]);  
+
   useEffect(() => {
     if (clicksRemaining < 500) {
       setCylinderColor('red');
@@ -130,14 +123,14 @@ const Home: React.FC = () => {
         setClicksRemaining((prev) => Math.max(prev - 1, 0));
         
         await updateDoc(userRef, { balance: newBalance });
-
+  
         const success = await updateBalance(userId, newBalance);
         if (success) {
           console.log('Balance updated successfully via API');
         } else {
           console.error('Failed to update balance via API');
         }
-
+  
         if (newBalance >= 10000) {
           setDailyLimitReached(true);
           const nextTime = new Date();
@@ -145,7 +138,7 @@ const Home: React.FC = () => {
           nextTime.setHours(0, 0, 0, 0);
           setNextMiningTime(nextTime);
         }
-
+  
         setTimeout(() => {
           setFlyingNumbers((prev) => prev.filter(f => f.id !== newFlyingNumberId));
         }, 2000);
@@ -154,7 +147,7 @@ const Home: React.FC = () => {
       }
     }
   };  
-
+  
   const handleMineRelease = () => {
     isClicking.current = false;
     if (clicksRemaining === 0) {
@@ -232,29 +225,47 @@ const Home: React.FC = () => {
 
   const updateBalance = async (userId: string, balance: number) => {
     try {
-      await axios.post('/api/updateBalance', {
-        userId,
-        balance
+      const response = await fetch('/api/update-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          balance: balance,
+        }),
       });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update balance');
+      }
+  
+      const data = await response.json();
+      console.log('Balance updated via API:', data);
       return true;
     } catch (error) {
-      console.error('Failed to update balance:', error);
+      console.error('Error updating balance via API:', error);
       return false;
     }
-  };
+  };  
 
-  const renderFlyingNumbers = () => {
-    return flyingNumbers.map(number => (
-      <div
-        key={number.id}
-        className={styles.flyingNumber}
-        style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}
-      >
-        +{number.amount}
-      </div>
-    ));
-  };
-  
+  useEffect(() => {
+    const createBubble = () => {
+      const bubble = document.createElement('div');
+      bubble.className = styles.bubble;
+      bubble.style.left = `${Math.random() * 100}%`;
+      document.body.appendChild(bubble);
+
+      setTimeout(() => {
+        bubble.remove();
+      }, 10000);
+    };
+
+    const bubbleInterval = setInterval(createBubble, 300);
+
+    return () => clearInterval(bubbleInterval);
+  }, []);
+
   return (
     <div className={styles.container}>
       <div className={styles.statusBar}>
