@@ -37,28 +37,35 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const actualUserId = queryParams.get('userId') || 'testUser123';
-    setUserId(actualUserId);
+    const actualUserId = queryParams.get('userId');
+    if (actualUserId) {
+      setUserId(actualUserId);
+    } else {
+      // Handle the case where no userId is provided in query parameters
+      // You might want to redirect the user or prompt for authentication
+      console.warn('No userId found in query parameters.');
+    }
   }, []);  
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (userId) {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserName(userData?.name || 'User');
-        } else {
-          // If user data doesn't exist, fetch from Telegram and store it
-          const userData = await fetchAndStoreUserData(userId);
-          if (userData) {
-            setUserName(userData.userName);
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserName(userData?.name || 'User');
+          } else {
+            // Handle the case where user data doesn't exist
+            console.warn(`No data found for user with ID ${userId}`);
           }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
       }
     };
-
+  
     const fetchBalance = async () => {
       if (userId) {
         try {
@@ -68,6 +75,7 @@ const Home: React.FC = () => {
             const userBalance = userDoc.data()?.balance || 0;
             setBalance(userBalance);
           } else {
+            // If no balance data exists, initialize it
             await setDoc(userRef, { balance: 0 });
             setBalance(0);
           }
@@ -76,11 +84,11 @@ const Home: React.FC = () => {
         }
       }
     };
-
+  
     fetchUserData();
     fetchBalance();
   }, [userId]);
-
+  
   useEffect(() => {
     if (clicksRemaining < 500) {
       setCylinderColor('red');
@@ -178,14 +186,14 @@ const Home: React.FC = () => {
           limit: 1
         }
       });
-
+  
       const userName = response.data.result.user.first_name;
       const userAvatar = response.data.result.total_count > 0 ? response.data.result.photos[0][0].file_id : null;
-
+  
       // Store user data in Firestore
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, { name: userName, avatar: userAvatar }, { merge: true });
-
+  
       return { userName, userAvatar };
     } catch (error) {
       console.error('Error fetching user data:', error);
