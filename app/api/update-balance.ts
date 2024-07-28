@@ -3,6 +3,8 @@ import { db } from '../../lib/firebase';
 import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
 const updateBalance = async (req: NextApiRequest, res: NextApiResponse) => {
+  console.log('Request Body:', req.body);
+
   if (req.method === 'POST') {
     const { user_id, balance } = req.body;
 
@@ -21,6 +23,7 @@ const updateBalance = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       const updatedUserDoc = await getDoc(userRef);
+      console.log('Updated User Data:', updatedUserDoc.data());
       return res.status(200).json({ success: true, data: updatedUserDoc.data() });
       
     } catch (error: any) {

@@ -39,17 +39,16 @@ const Home: React.FC = () => {
     const queryParams = new URLSearchParams(window.location.search);
     const actualUserId = queryParams.get('userId') || 'testUser123';
     setUserId(actualUserId);
-  
+
     const fetchUserData = async () => {
       if (actualUserId) {
         const userRef = doc(db, 'users', actualUserId);
         const userDoc = await getDoc(userRef);
-  
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserName(userData?.name || 'User');
         } else {
-          // If user data doesn't exist, fetch from Telegram and store it
           const userData = await fetchAndStoreUserData(actualUserId);
           if (userData) {
             setUserName(userData.userName);
@@ -57,9 +56,9 @@ const Home: React.FC = () => {
         }
       }
     };
-  
+
     fetchUserData();
-  }, []);  
+  }, []);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -114,16 +113,12 @@ const Home: React.FC = () => {
       isClicking.current = true;
       try {
         const userRef = doc(db, 'users', userId);
+  
+        // Update balance in Firestore
         const newBalance = balance + 1;
-        setBalance(newBalance);
-        setRewardedAmount(1);
-        const newFlyingNumberId = flyingNumberId + 1;
-        setFlyingNumberId(newFlyingNumberId);
-        setFlyingNumbers((prev) => [...prev, { id: newFlyingNumberId, amount: 1 }]);
-        setClicksRemaining((prev) => Math.max(prev - 1, 0));
-        
         await updateDoc(userRef, { balance: newBalance });
   
+        // Update balance via API (if necessary)
         const success = await updateBalance(userId, newBalance);
         if (success) {
           console.log('Balance updated successfully via API');
@@ -131,19 +126,20 @@ const Home: React.FC = () => {
           console.error('Failed to update balance via API');
         }
   
-        if (newBalance >= 10000) {
-          setDailyLimitReached(true);
-          const nextTime = new Date();
-          nextTime.setDate(nextTime.getDate() + 1);
-          nextTime.setHours(0, 0, 0, 0);
-          setNextMiningTime(nextTime);
-        }
+        // Update UI and state
+        setBalance(newBalance);
+        setRewardedAmount(1);
+        const newFlyingNumberId = flyingNumberId + 1;
+        setFlyingNumberId(newFlyingNumberId);
+        setFlyingNumbers((prev) => [...prev, { id: newFlyingNumberId, amount: 1 }]);
+        setClicksRemaining((prev) => Math.max(prev - 1, 0));
   
         setTimeout(() => {
           setFlyingNumbers((prev) => prev.filter(f => f.id !== newFlyingNumberId));
         }, 2000);
       } catch (error) {
-        console.error("Error updating balance:", error);
+        console.error("Error fetching user data:", error);
+        // Handle errors gracefully (e.g., display an error message to the user)
       }
     }
   };  
@@ -182,17 +178,16 @@ const Home: React.FC = () => {
   
       const userName = response.data.result.user.first_name;
       const userAvatar = response.data.result.total_count > 0 ? response.data.result.photos[0][0].file_id : null;
-  
-      // Store user data in Firestore
+
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, { name: userName, avatar: userAvatar }, { merge: true });
-  
+
       return { userName, userAvatar };
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error Fetching User Data:', error);
       return null;
     }
-  };  
+  };
 
   const formatBalance = (balance: number) => {
     if (balance < 1000000) {
@@ -223,26 +218,19 @@ const Home: React.FC = () => {
     }, 2000);
   };
 
-  const updateBalance = async (userId: string, balance: number) => {
+  const updateBalance = async (user_id: string, balance: number): Promise<boolean> => {
     try {
-      const response = await fetch('/api/update-balance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          balance: balance,
-        }),
+      const response = await axios.post('/api/update-balance', {
+        user_id,
+        balance
       });
   
-      if (!response.ok) {
-        throw new Error('Failed to update balance');
+      if (response.status === 200) {
+        return true;
+      } else {
+        console.error('API Response Error:', response.data);
+        return false;
       }
-  
-      const data = await response.json();
-      console.log('Balance updated via API:', data);
-      return true;
     } catch (error) {
       console.error('Error updating balance via API:', error);
       return false;
@@ -271,8 +259,8 @@ const Home: React.FC = () => {
       <div className={styles.statusBar}>
       <div className={styles.statusItem}>
           <FontAwesomeIcon icon={faUser} size="2x" />
-          <div>{userName}</div>
-        </div>
+        <div>{userName}</div>
+      </div>
         <div className={styles.statusItem}>
           <FontAwesomeIcon icon={faSackDollar} size="2x" />
             <span>{formatBalance(balance)} SLC</span>
